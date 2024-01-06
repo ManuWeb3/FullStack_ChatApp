@@ -1,11 +1,93 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+model Profile {
+  id       String @id @default(uuid())  // purpose? -maybe a Prisma-rule that every model should have an id
+  userId   String @unique   // gets populated when user's profile gets created for the first time in Clerk
+  name     String
+  imageUrl String @db.Text
+  email    String @db.Text
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  servers   Server[]
+  members   Member[]
+  channels  Channel[]
+}
+
+model Server {
+  id         String @id @default(uuid())
+  name       String
+  imageUrl   String @db.Text
+  inviteCode String @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String
+
+  members  Member[] // 1-m Server-Members
+  channels Channel[] // 1-m Server-Channels
+  // relational db UTH create indexes based upon F.Key constraints
+  // BUT, prisma does Not use F.Keys
+  // This will cause poor perf. in quesrying the db that involves F.Keys
+  // Hence, it's suggested (warning, not error) to add @@index([foerign key]) wen referencing a relation in prisma
+
+  @@index([profileId])
+}
+
+enum MemberRole {
+  ADMIN
+  MODERATOR
+  GUEST
+}
+
+model Member {
+  id   String     @id @default(uuid())
+  role MemberRole @default(GUEST)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String
+
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  serverId String
+
+  @@index([profileId])
+  @@index([serverId])
+}
+
+enum ChannelType {
+  TEXT
+  AUDIO
+  VIDEO
+}
+
+model Channel {
+  id   String      @id @default(uuid())
+  name String
+  type ChannelType @default(TEXT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId String
+
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  serverId String
+
+  @@index([profileId])
+  @@index([serverId])
 }
