@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form'
 import z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
+import axios from 'axios'
+import { useRouter } from 'next/navigation'
 
 import {
   Dialog,
@@ -40,6 +42,7 @@ const formSchema = z.object({
 
 export const InitialModal = () => {
   const [isMounted, setIsMounted] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     setIsMounted(true)
@@ -55,8 +58,21 @@ export const InitialModal = () => {
 
   const isLoading = form.formState.isSubmitting
 
+  // async bcz of using axios
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values)
+    try {
+      // STEPS to follow onSubmit
+      axios.post('/api/servers', values)
+      // clear 3 things
+      form.reset() // reset the form values => state (and subscription?)
+      router.refresh()
+      window.location.reload()
+    } catch (error) {
+      console.log(error)
+    }
+    // console.log(values)
+    // Both the Group-name and URL values entered in the form are logged on browser's console.
+    // bcz it's a part of React Comp. being rendered on client.
   }
 
   if (!isMounted) {

@@ -8,6 +8,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// All the 4 models have a UUID
 model Profile {
   id       String @id @default(uuid())  // purpose? -maybe a Prisma-rule that every model should have an id
   userId   String @unique   // gets populated when user's profile gets created for the first time in Clerk
@@ -91,3 +92,4 @@ model Channel {
   @@index([profileId])
   @@index([serverId])
 }
+
